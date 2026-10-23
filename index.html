@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f8f7f2">
+    <title>Calorie Tracker — Daily nutrition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Main navigation">
+        <a class="brand" href="#" aria-label="Goodplate home">
+          <span class="brand-mark" aria-hidden="true">✳</span>
+          <span>Calorie Tracker</span>
+        </a>
+
+        <div class="nav-label">MENU</div>
+        <nav class="nav-links">
+          <button class="nav-link active" type="button" data-navigate="home" aria-current="page"><span class="nav-icon" aria-hidden="true">⌂</span> Home</button>
+          <button class="nav-link" type="button" data-open-estimator><span class="nav-icon" aria-hidden="true">＋</span> Log meal</button>
+          <button class="nav-link" type="button" data-navigate="history"><span class="nav-icon" aria-hidden="true">◷</span> History</button>
+          <button class="nav-link" type="button" data-navigate="insights"><span class="nav-icon" aria-hidden="true">▥</span> Insights</button>
+          <button class="nav-link" type="button" data-navigate="settings"><span class="nav-icon" aria-hidden="true">⚙</span> Settings</button>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <div class="tip-card">
+            <span class="tip-spark" aria-hidden="true">✳</span>
+            <p class="tip-title">Small steps add up.</p>
+            <p class="tip-copy">A little more balance today goes a long way.</p>
+          </div>
+          <button class="profile" type="button" data-navigate="settings" aria-label="Profile settings">
+            <div class="avatar" aria-hidden="true">M</div>
+            <div>
+              <div class="profile-name">My profile</div>
+              <div class="profile-subtitle">Personal tracker</div>
+            </div>
+            <span class="profile-dots" aria-hidden="true">···</span>
+          </button>
+        </div>
+      </aside>
+
+      <main class="main-content" id="dashboard">
+        <div class="app-view" data-page="home">
+        <header class="topbar">
+          <div class="mobile-brand"><span class="brand-mark" aria-hidden="true">✳</span> Calorie Tracker</div>
+          <div class="topbar-date"><span class="date-dot" aria-hidden="true"></span><span id="today-label">Today</span></div>
+          <button class="primary-button topbar-log-button" type="button" data-open-estimator><span aria-hidden="true">＋</span> Log meal</button>
+        </header>
+
+        <section class="welcome-row">
+          <div>
+            <p class="eyebrow" id="welcome-date">YOUR DAILY OVERVIEW</p>
+            <h1 id="greeting">Good morning<span class="heading-period">.</span></h1>
+            <p class="welcome-copy">Here's how today is shaping up.</p>
+          </div>
+          <div class="streak-pill"><span aria-hidden="true">✓</span> Estimates always need your review</div>
+        </section>
+
+        <section class="summary-grid" aria-label="Daily nutrition summary">
+          <article class="card nutrition-card" id="nutrition">
+            <section class="calorie-card" aria-label="Calorie goal">
+              <div class="calorie-ring" id="calorie-progress" role="progressbar" aria-label="Daily calorie goal" aria-valuemin="0" aria-valuemax="2000" aria-valuenow="0">
+                <div class="calorie-ring-center">
+                  <strong id="calories-consumed">0</strong>
+                  <span>of <span id="calories-goal">2,000</span> kcal</span>
+                </div>
+              </div>
+              <p class="calories-remaining"><strong id="calories-remaining">2,000</strong> calories remaining</p>
+              <div class="daily-balance">
+                <div><p class="balance-label">DAILY BALANCE</p><p class="balance-message">Your progress today</p></div>
+                <span class="balance-check" aria-hidden="true">✓</span>
+              </div>
+            </section>
+            <section class="macro-card" aria-label="Macronutrients">
+              <p class="macro-heading">Daily nutrients</p>
+              <div class="macro-list">
+                <div class="macro-row">
+                  <div class="macro-name"><span>Protein</span><span class="macro-amount"><span id="protein-consumed">0</span>g / 150g</span></div>
+                  <div class="progress-track macro-track"><div class="progress-fill protein-fill" id="protein-progress"></div></div>
+                </div>
+                <div class="macro-row">
+                  <div class="macro-name"><span>Carbs</span><span class="macro-amount"><span id="carbs-consumed">0</span>g / 220g</span></div>
+                  <div class="progress-track macro-track"><div class="progress-fill carbs-fill" id="carbs-progress"></div></div>
+                </div>
+                <div class="macro-row">
+                  <div class="macro-name"><span>Fat</span><span class="macro-amount"><span id="fat-consumed">0</span>g / 67g</span></div>
+                  <div class="progress-track macro-track"><div class="progress-fill fat-fill" id="fat-progress"></div></div>
+                </div>
+              </div>
+            </section>
+          </article>
+        </section>
+
+        <section class="content-grid">
+          <section class="card diary-card" id="meal-list">
+            <div class="section-heading">
+              <div>
+                <p class="card-label">YOUR FOOD DIARY</p>
+                <h2>Today's meals<span class="heading-period">.</span></h2>
+              </div>
+              <button class="primary-button add-meal-button" type="button" data-open-meal>
+                <span class="plus-icon" aria-hidden="true">+</span> Add a meal
+              </button>
+            </div>
+            <div class="meal-list" id="meal-list-items" aria-live="polite"></div>
+            <div class="diary-note"><span aria-hidden="true">✳</span> Estimates are a guide — your portions may vary.</div>
+          </section>
+
+          <aside class="card assistant-card">
+            <div class="assistant-header">
+              <div class="assistant-icon" aria-hidden="true">✳</div>
+              <div>
+                <p class="card-label">YOUR MEAL COMPANION</p>
+                <h2>What's on your plate?</h2>
+              </div>
+            </div>
+            <p class="assistant-copy">Tell me what you ate, and I'll help you put together a nutrition estimate.</p>
+            <form id="meal-form">
+              <label class="visually-hidden" for="meal-description">Describe your meal</label>
+              <textarea id="meal-description" rows="3" maxlength="240" placeholder="e.g. Chicken rice bowl with avocado"></textarea>
+              <label class="photo-upload" for="meal-photo">
+                <span class="photo-upload-icon" aria-hidden="true">▧</span>
+                <span><strong>Add a meal photo</strong><small>Choose an image from your device</small></span>
+              </label>
+              <input class="visually-hidden" id="meal-photo" type="file" accept="image/*">
+              <div class="photo-preview" id="photo-preview" hidden>
+                <img id="photo-preview-image" alt="Selected meal preview">
+                <div class="photo-preview-name" id="photo-preview-name"></div>
+                <button class="remove-photo" id="remove-photo" type="button" aria-label="Remove selected photo">×</button>
+              </div>
+              <div class="input-hint">Text, a photo, or both · images up to 10 MB</div>
+              <button class="primary-button assistant-button" type="submit">
+                <span aria-hidden="true">✦</span> Get meal estimate <span class="button-arrow" aria-hidden="true">→</span>
+              </button>
+            </form>
+            <div class="assistant-result" id="assistant-result" hidden aria-live="polite"></div>
+            <div class="ai-disclaimer"><span class="disclaimer-icon" aria-hidden="true">ⓘ</span> Demo estimates only. Photo recognition is not connected; review and edit before adding.</div>
+          </aside>
+        </section>
+
+        <footer class="page-footer">Made for mindful moments <span aria-hidden="true">♡</span></footer>
+        </div>
+
+        <section class="app-view destination-view" data-page="history" hidden>
+          <header class="destination-header">
+            <p class="eyebrow">YOUR FOOD DIARY</p>
+            <h1>Meal history<span class="heading-period">.</span></h1>
+            <p class="welcome-copy" id="history-date"></p>
+          </header>
+          <article class="card destination-card">
+            <div class="destination-card-heading">
+              <div><p class="card-label">TODAY AT A GLANCE</p><h2><span id="history-meal-count">0</span> meals logged</h2></div>
+              <div class="history-calorie-total"><strong id="history-calories">0</strong><span> kcal</span></div>
+            </div>
+            <div class="history-macro-summary">
+              <span>Protein <strong id="history-protein">0g</strong></span>
+              <span>Carbs <strong id="history-carbs">0g</strong></span>
+              <span>Fat <strong id="history-fat">0g</strong></span>
+            </div>
+            <div class="meal-list history-meal-list" id="history-meal-list" aria-live="polite"></div>
+            <p class="destination-note">Only meals logged in this browser today are shown here.</p>
+          </article>
+        </section>
+
+        <section class="app-view destination-view" data-page="insights" hidden>
+          <header class="destination-header">
+            <p class="eyebrow">YOUR NUTRITION</p>
+            <h1>Insights<span class="heading-period">.</span></h1>
+            <p class="welcome-copy">A simple snapshot of the meals you've logged today.</p>
+          </header>
+          <article class="card destination-card">
+            <p class="card-label">TODAY'S PROGRESS</p>
+            <h2 class="insights-heading" id="insights-heading">Your insights will show up here.</h2>
+            <p class="insights-copy" id="insights-copy">Log a meal to see a summary of your calorie and macro progress.</p>
+            <div class="insight-stat-grid">
+              <div class="insight-stat"><span>Calories</span><strong id="insights-calories">0</strong><small>of <span id="insights-calorie-goal">2,000</span> kcal goal</small></div>
+              <div class="insight-stat"><span>Protein</span><strong id="insights-protein">0g</strong><small>of <span id="insights-protein-goal">150</span>g goal</small></div>
+              <div class="insight-stat"><span>Carbs</span><strong id="insights-carbs">0g</strong><small>of <span id="insights-carbs-goal">220</span>g goal</small></div>
+              <div class="insight-stat"><span>Fat</span><strong id="insights-fat">0g</strong><small>of <span id="insights-fat-goal">67</span>g goal</small></div>
+            </div>
+            <p class="destination-note">Nutrition targets are personal settings, not medical advice.</p>
+          </article>
+        </section>
+
+        <section class="app-view destination-view" data-page="settings" hidden>
+          <header class="destination-header">
+            <p class="eyebrow">MAKE IT YOURS</p>
+            <h1>Settings<span class="heading-period">.</span></h1>
+            <p class="welcome-copy">Adjust the daily targets shown on your dashboard.</p>
+          </header>
+          <article class="card destination-card">
+            <p class="card-label">APPEARANCE</p>
+            <div class="theme-setting">
+              <div><h2>Dark mode</h2><p>Choose a comfortable color theme.</p></div>
+              <label class="theme-toggle">
+                <span class="visually-hidden">Enable dark mode</span>
+                <input id="theme-toggle" type="checkbox" role="switch">
+                <span class="theme-switch-ui" aria-hidden="true"></span>
+              </label>
+            </div>
+            <div class="settings-divider"></div>
+            <p class="card-label">DAILY NUTRITION TARGETS</p>
+            <h2 class="settings-heading">Your daily goals</h2>
+            <form class="settings-form" id="settings-form">
+              <label for="goal-calories">Calories <span>kcal</span></label>
+              <input id="goal-calories" name="calories" type="number" min="1" max="10000" step="1" required>
+              <label for="goal-protein">Protein <span>grams</span></label>
+              <input id="goal-protein" name="protein" type="number" min="1" max="1000" step="1" required>
+              <label for="goal-carbs">Carbs <span>grams</span></label>
+              <input id="goal-carbs" name="carbs" type="number" min="1" max="1000" step="1" required>
+              <label for="goal-fat">Fat <span>grams</span></label>
+              <input id="goal-fat" name="fat" type="number" min="1" max="1000" step="1" required>
+              <button class="primary-button settings-submit" type="submit">Save daily goals <span aria-hidden="true">→</span></button>
+            </form>
+            <p class="destination-note">Goals are saved only in this browser and can be changed anytime.</p>
+          </article>
+        </section>
+      </main>
+    </div>
+    <nav class="mobile-nav" aria-label="Quick navigation">
+      <button class="mobile-nav-item active" type="button" data-navigate="home" aria-current="page"><span aria-hidden="true">⌂</span>Home</button>
+      <button class="mobile-nav-item" type="button" data-open-estimator><span aria-hidden="true">＋</span>Log meal</button>
+      <button class="mobile-nav-item" type="button" data-navigate="history"><span aria-hidden="true">◷</span>History</button>
+      <button class="mobile-nav-item" type="button" data-navigate="insights"><span aria-hidden="true">▥</span>Insights</button>
+      <button class="mobile-nav-item" type="button" data-navigate="settings"><span aria-hidden="true">⚙</span>Settings</button>
+    </nav>
+
+    <dialog class="meal-dialog" id="meal-dialog" aria-labelledby="dialog-title">
+      <form method="dialog" class="dialog-close-form"><button class="icon-button dialog-close" aria-label="Close dialog">×</button></form>
+      <p class="card-label">ADD TO YOUR DIARY</p>
+      <h2 id="dialog-title">Add a meal<span class="heading-period">.</span></h2>
+      <p class="dialog-copy">Describe your meal or upload a photo to get an editable estimate.</p>
+      <button class="primary-button dialog-ai-button" id="dialog-ai" type="button"><span aria-hidden="true">✦</span> Describe or photograph a meal</button>
+      <div class="dialog-divider"><span>or add manually</span></div>
+      <form id="manual-meal-form" class="manual-form">
+        <label for="manual-name">Meal name</label>
+        <input id="manual-name" type="text" maxlength="80" placeholder="e.g. Greek yogurt and berries" required>
+        <div class="nutrition-inputs">
+          <div><label for="manual-calories">Calories</label><input id="manual-calories" type="number" min="0" max="10000" step="1" placeholder="350" required></div>
+          <div><label for="manual-protein">Protein (g)</label><input id="manual-protein" type="number" min="0" max="1000" step="1" placeholder="20" required></div>
+          <div><label for="manual-carbs">Carbs (g)</label><input id="manual-carbs" type="number" min="0" max="1000" step="1" placeholder="40" required></div>
+          <div><label for="manual-fat">Fat (g)</label><input id="manual-fat" type="number" min="0" max="1000" step="1" placeholder="10" required></div>
+        </div>
+        <button class="primary-button manual-submit" type="submit">Add to today's diary <span aria-hidden="true">→</span></button>
+      </form>
+    </dialog>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
