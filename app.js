@@ -75,6 +75,7 @@ function isValidMeal(meal) {
 function saveMeals() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(meals));
+    writeMealsToFolder();
   } catch (error) {
     console.error("Could not save meals.", error);
     showToast("Could not save your diary. Check your browser storage settings.");
@@ -471,5 +472,93 @@ document.querySelector("#settings-form").addEventListener("submit", (event) => {
   render();
   showToast("Daily goals saved.");
 });
+// ---------- Folder storage (File System Access API, no backend) ----------
+let dataDir = null;
+const folderStatus = document.querySelector("#folder-status");
+const chooseFolderBtn = document.querySelector("#choose-folder");
 
+function idbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open("calorie-tracker", 1);
+    req.onupgradeneeded = () => req.result.createObjectStore("handles");
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function idbGet(key) {
+  const db = await idbOpen();
+  return new Promise((resolve) => {
+    const req = db.transaction("handles").objectStore("handles").get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => resolve(undefined);
+  });
+}
+async function idbSet(key, value) {
+  const db = await idbOpen();
+  return new Promise((resolve) => {
+    const tx = db.transaction("handles", "readwrite");
+    tx.objectStore("handles").put(value, key);
+    tx.oncomplete = resolve;
+  });
+}
+
+async function writeMealsToFolder() {
+  if (!dataDir) return;
+  try {
+    const file = await dataDir.getFileHandle("meals.json", { create: true });
+    const writable = await file.createWritable();
+    await writable.write(JSON.stringify(meals, null, 2));
+    await writable.close();
+  } catch (error) {
+    console.error("Could not write to the data folder.", error);
+    showToast("Could not write to your data folder. Try reconnecting it in Settings.");
+  }
+}
+
+async function syncFromFolder() {
+  try {
+    const handle = await dataDir.getFileHandle("meals.json");
+    const parsed = JSON.parse(await (await handle.getFile()).text());
+    if (Array.isArray(parsed)) meals = parsed.filter(isValidMeal);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(meals));
+    render();
+  } catch {
+    await writeMealsToFolder(); // no file yet, so create it from what we have
+  }
+  folderStatus.textContent = `Saving to folder: ${dataDir.name}`;
+  chooseFolderBtn.textContent = "Change folder";
+}
+
+async function initFolder() {
+  if (!("showDirectoryPicker" in window)) {
+    folderStatus.textContent = "Folder saving needs Chrome or Edge. Meals are saved in this browser.";
+    chooseFolderBtn.hidden = true;
+    return;
+  }
+  const saved = await idbGet("dir");
+  if (!saved) return;
+  dataDir = saved;
+  if ((await saved.queryPermission({ mode: "readwrite" })) === "granted") {
+    await syncFromFolder();
+  } else {
+    folderStatus.textContent = `Click "Reconnect" to keep saving to ${saved.name}.`;
+    chooseFolderBtn.textContent = "Reconnect";
+  }
+}
+
+chooseFolderBtn.addEventListener("click", async () => {
+  try {
+    if (dataDir && chooseFolderBtn.textContent === "Reconnect") {
+      if ((await dataDir.requestPermission({ mode: "readwrite" })) !== "granted") return;
+    } else {
+      dataDir = await window.showDirectoryPicker({ mode: "readwrite" });
+      await idbSet("dir", dataDir);
+    }
+    await syncFromFolder();
+    showToast("Data folder connected.");
+  } catch (error) {
+    if (error.name !== "AbortError") console.error(error);
+  }
+});
 render();
+initFolder();
