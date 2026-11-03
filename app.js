@@ -526,30 +526,29 @@ function showToast(message) {
   toastTimer = window.setTimeout(() => toast.classList.remove("visible"), 3200);
 }
 
-function estimateMeal(description) {
-  const text = description.toLowerCase();
-  if (/salmon|fish|tuna/.test(text)) {
-    return { name: description.trim(), calories: 480, protein: 36, carbs: 42, fat: 18, emoji: "🐟" };
+async function requestMealEstimate(description, photo) {
+  const formData =  new FormData();
+  
+  if (description) formData.append("description", description);
+  if (photo) formData.append("image", photo);
+
+  const response = await fetch("/api/estimate", {
+    method: "POST",
+    body: formData
+  });
+
+  let result
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error("The AI server returned an invalid response.")
   }
-  if (/salad|greens|lettuce/.test(text)) {
-    return { name: description.trim(), calories: 340, protein: 20, carbs: 28, fat: 16, emoji: "🥗" };
+
+  if (!response.ok) {
+    throw new Error(result.detail || "The AI estimate could not be completed.");
   }
-  if (/oat|porridge/.test(text)) {
-    return { name: description.trim(), calories: 320, protein: 12, carbs: 52, fat: 8, emoji: "🥣" };
-  }
-  if (/egg|omelet|omelette/.test(text)) {
-    return { name: description.trim(), calories: 310, protein: 20, carbs: 22, fat: 15, emoji: "🍳" };
-  }
-  if (/pizza/.test(text)) {
-    return { name: description.trim(), calories: 560, protein: 24, carbs: 62, fat: 23, emoji: "🍕" };
-  }
-  if (/smoothie|shake/.test(text)) {
-    return { name: description.trim(), calories: 290, protein: 18, carbs: 38, fat: 7, emoji: "🥤" };
-  }
-  if (/chicken|turkey/.test(text)) {
-    return { name: description.trim(), calories: 520, protein: 38, carbs: 48, fat: 17, emoji: "🍗" };
-  }
-  return { name: description.trim(), calories: 420, protein: 24, carbs: 46, fat: 14, emoji: "🥗" };
+
+  return result;
 }
 
 function showEstimate(estimate) {
@@ -567,7 +566,7 @@ function showEstimate(estimate) {
   label.textContent = "MEAL ESTIMATE";
   const badge = document.createElement("span");
   badge.className = "demo-badge";
-  badge.textContent = "DEMO";
+  badge.textContent = "AI ESTIMATE";
   header.append(label, badge);
   const name = document.createElement("div");
   name.className = "suggestion-name";
@@ -634,36 +633,33 @@ function showMealEntry() {
   mealForm.hidden = false;
 }
 
-function runEstimate() {
+async function runEstimate() {
+  const description =  mealDescription.value.trim();
+  if (!description && !selectedPhoto) {
+    mealDescription.focus();
+    showToast("Describe your meal or choose a photo first.");
+    return;
+  }
+
   mealEntryScreen.hidden = true;
   loadingScreen.hidden = false;
   errorScreen.hidden = true;
-  const description = mealDescription.value.trim();
 
-  estimateTimer = window.setTimeout(() => {
-    try {
-      if (selectedPhoto) {
-        const photoName = selectedPhoto.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
-        showEstimate({
-          name: description || (photoName ? `Meal photo: ${photoName}` : "Meal from photo"),
-          calories: 420,
-          protein: 24,
-          carbs: 46,
-          fat: 14,
-          emoji: "🥗"
-        });
-        if (!description) showToast("Demo photo estimate only — image recognition is not connected yet.");
-      } else {
-        showEstimate(estimateMeal(description));
-      }
-    } catch (error) {
-      console.error("Could not estimate the meal.", error);
-      loadingScreen.hidden = true;
-      errorScreen.hidden = false;
-      document.querySelector("#estimate-error-message").textContent =
-              "The estimate couldn't be completed. Try again or edit the meal details.";
-    }
-  }, 900);
+  const submitButton = document.querySelector("#estimate-submit");
+  if (submitButton) submitButton.disabled = true;
+
+  try {
+    const estimate = await requestMealEstimate(description, selectedPhoto);
+    showEstimate(estimate);
+  } catch (error) {
+    console.error("Could not estimate the meal.", error);
+    loadingScreen.hidden = true;
+    errorScreen.hidden = false;
+    document.querySelector("#estimate-error-message").textContent = 
+      error.message || "The estimate couldn't be completed. Check that the AI server and Ollama are running, then try again.";
+  } finally {
+    if (submitButton) submitButton.disabled = false;
+  }
 }
 
 function openMealDialog() {
