@@ -20,10 +20,16 @@ MAX_IMAGE_BYTES = 10 * 1024 * 1024
 app = FastAPI(title="Calorie Tracker AI")
 
 def ollama_chat(model: str, messages: list, *, json_mode: bool = False) -> str:
-    payload = { "model": model, "messages": messages, "stream": False, "options": {"temperature": 0.2},
+    payload = { 
+        "model": model, 
+        "messages": messages, 
+        "stream": False, 
+        "options": {"temperature": 0.2},
     }
-    if json_mode: payload["format"] = "json"
-    try: response = requests.post(
+    if json_mode: 
+        payload["format"] = "json"
+    try: 
+        response = requests.post(
             f"{OLLAMA_URL}/api/chat",
             json=payload,
             timeout=(10, 240),
@@ -31,6 +37,7 @@ def ollama_chat(model: str, messages: list, *, json_mode: bool = False) -> str:
         response.raise_for_status() 
         data = response.json()
         return data["message"]["content"].strip()
+
     except requests.RequestException as exc:
         raise HTTPException(
             status_code=503,
@@ -67,9 +74,10 @@ def parse_model_json(content: str) -> dict:
 
 @app.get("/api/health")
 def health():
-    try: response = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
-         response.raise_for_status()
-         installed = {item.get("name") for item in response.json().get("models", [])}
+    try: 
+        response = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
+        response.raise_for_status()
+        installed = {item.get("name") for item in response.json().get("models", [])}
     except requests.RequestException as exc:
         raise HTTPException(status_code=503, detail="Ollama is not reachable.") from exc
 
