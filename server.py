@@ -23,8 +23,14 @@ def ollama_chat(model: str, messages: list, *, json_mode: bool = False) -> str:
     payload = { 
         "model": model, 
         "messages": messages, 
-        "stream": False, 
-        "options": {"temperature": 0.2},
+        "stream": False,
+        # no more load times (hooray woohoo yipee wow man)
+        "keep_alive": "30m",
+        "options": {
+            "temperature": 0.1,
+            "num_ctx": 2048,
+            "num_predict": 160 if model == VISION_MODEL else 120,
+        },
     }
     if json_mode: 
         payload["format"] = "json"
@@ -88,6 +94,21 @@ def health():
         "nutrition_model": NUTRITION_MODEL,
         "missing_models": missing,
     }
+
+
+@app.post("/api/warmup")
+def warmup_models():
+    """Load both local models before a live demo so the first estimate is less likely to cold-start."""
+    ollama_chat(
+        VISION_MODEL,
+        [{"role": "user", "content": "Reply with the word ready."}],
+    )
+    ollama_chat(
+        NUTRITION_MODEL,
+        [{"role": "user", "content": 'Return only this JSON: {"ready": true}'}],
+        json_mode=True,
+    )
+    return {"status": "ready", "message": "Both AI models are warmed up."}
 
 
 @app.post("/api/estimate")
