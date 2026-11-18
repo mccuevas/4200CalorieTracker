@@ -802,7 +802,7 @@ for (const input of [cameraInput, photoInput]) {
   });
 }
 
-document.querySelector("#open-camera").addEventListener("click", () => cameraInput.click());
+document.querySelector("#open-camera").addEventListener("click", openCamera);
 document.querySelector("#choose-photo").addEventListener("click", () => photoInput.click());
 document.querySelector("#remove-photo").addEventListener("click", clearSelectedPhoto);
 
@@ -835,5 +835,85 @@ document.querySelector("#settings-form").addEventListener("submit", (event) => {
   render();
   showToast("Daily goals saved.");
 });
+// ---- Webcam capture ----
+let cameraStream = null;
 
+const cameraStyle = document.createElement("style");
+cameraStyle.textContent = `
+  .camera-overlay { position: fixed; inset: 0; z-index: 1000; display: flex;
+    align-items: center; justify-content: center; background: rgba(0,0,0,.75); padding: 16px; }
+  .camera-overlay[hidden] { display: none; }
+  .camera-box { width: min(560px, 100%); display: grid; gap: 12px; }
+  .camera-video { width: 100%; max-height: 70vh; border-radius: 16px; background: #000; object-fit: cover; }
+  .camera-buttons { display: flex; gap: 8px; }
+  .camera-buttons button { flex: 1; }
+`;
+document.head.append(cameraStyle);
+
+const cameraOverlay = document.createElement("div");
+cameraOverlay.className = "camera-overlay";
+cameraOverlay.hidden = true;
+cameraOverlay.innerHTML = `
+  <div class="camera-box">
+    <video class="camera-video" autoplay playsinline muted></video>
+    <div class="camera-buttons">
+      <button type="button" class="primary-button" data-camera-capture>Capture</button>
+      <button type="button" class="secondary-button" data-camera-cancel>Cancel</button>
+    </div>
+  </div>`;
+mealDialog.append(cameraOverlay);
+
+const cameraVideo = cameraOverlay.querySelector(".camera-video");
+
+async function openCamera() {
+  // No webcam API (or insecure page): fall back to the file/camera picker
+  if (!navigator.mediaDevices?.getUserMedia) {
+    cameraInput.click();
+    return;
+  }
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
+    });
+    cameraVideo.srcObject = cameraStream;
+    cameraOverlay.hidden = false;
+  } catch (error) {
+    console.error("Could not start the camera.", error);
+    if (error.name === "NotAllowedError") {
+      showToast("Camera access was blocked. Allow it in your browser's address bar.");
+    } else if (error.name === "NotFoundError") {
+      showToast("No camera was found on this device.");
+    } else {
+      showToast("Could not start the camera.");
+    }
+  }
+}
+
+function stopCamera() {
+  cameraStream?.getTracks().forEach((track) => track.stop());
+  cameraStream = null;
+  cameraVideo.srcObject = null;
+  cameraOverlay.hidden = true;
+}
+
+function captureCameraPhoto() {
+  if (!cameraVideo.videoWidth) return;
+  const canvas = document.createElement("canvas");
+  canvas.width = cameraVideo.videoWidth;
+  canvas.height = cameraVideo.videoHeight;
+  canvas.getContext("2d").drawImage(cameraVideo, 0, 0);
+  canvas.toBlob((blob) => {
+    if (!blob) {
+      showToast("Could not capture the photo. Try again.");
+      return;
+    }
+    const file = new File([blob], `meal-${Date.now()}.jpg`, { type: "image/jpeg" });
+    stopCamera();
+    showSelectedPhoto(file);
+  }, "image/jpeg", 0.9);
+}
+
+cameraOverlay.querySelector("[data-camera-capture]").addEventListener("click", captureCameraPhoto);
+cameraOverlay.querySelector("[data-camera-cancel]").addEventListener("click", stopCamera);
 render();
